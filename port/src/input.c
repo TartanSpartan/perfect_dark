@@ -780,8 +780,12 @@ static inline void inputLoadBinds(void)
 s32 inputInit(void)
 {
 	// Set SDL hints before initializing the controller subsystem.
+<<<<<<< HEAD
 	if (useHIDAPI)
 	{
+=======
+	if (useHIDAPI) {
+>>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 #if SDL_VERSION_ATLEAST(2, 0, 12)
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_GAMECUBE, "1");
 #endif
@@ -811,14 +815,22 @@ s32 inputInit(void)
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAMDECK, "1");
 #endif
 	}
+<<<<<<< HEAD
 	if (useRawInput)
 	{
+=======
+	if (useRawInput) {
+>>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 		SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "1");
 		SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "1");
 	}
 
+<<<<<<< HEAD
 	if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC))
 	{
+=======
+	if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC)) {
+>>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 		SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
 	}
 
