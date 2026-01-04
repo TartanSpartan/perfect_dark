@@ -88,7 +88,7 @@ static s32 connectedMask = 0;
 static s32 numJoysticks = 0;
 
 static s32 useHIDAPI = 1;
-static s32 useRawInput = 0;
+static s32 useRawInput = 1;
 
 static s32 mouseEnabled = 1;
 static s32 mouseX, mouseY;
@@ -206,7 +206,7 @@ void inputSetDefaultKeyBinds(s32 cidx, s32 n64mode)
 		{CK_RTRIG, VK_MOUSE_RIGHT, SDL_SCANCODE_Z},
 		{CK_LTRIG, SDL_SCANCODE_F, SDL_SCANCODE_X},
 		{CK_ZTRIG, VK_MOUSE_LEFT, SDL_SCANCODE_SPACE},
-		{CK_START, SDL_SCANCODE_RETURN, SDL_SCANCODE_TAB},
+		{CK_START, SDL_SCANCODE_TAB, 0},
 		{CK_DPAD_D, SDL_SCANCODE_Q, VK_MOUSE_MIDDLE},
 		{CK_DPAD_U, 0, 0},
 		{CK_Y, VK_MOUSE_WHEEL_DN, 0},
@@ -220,7 +220,11 @@ void inputSetDefaultKeyBinds(s32 cidx, s32 n64mode)
 		{CK_STICK_YNEG, SDL_SCANCODE_DOWN, 0},
 		{CK_STICK_YPOS, SDL_SCANCODE_UP, 0},
 		{CK_4000, SDL_SCANCODE_LSHIFT, 0},
-		{CK_2000, SDL_SCANCODE_LCTRL, 0}};
+		{CK_2000, SDL_SCANCODE_LCTRL, 0},
+		{CK_ACCEPT, SDL_SCANCODE_RETURN, SDL_SCANCODE_E},
+		{CK_CANCEL, VK_MOUSE_RIGHT, 0},
+		{CK_2000, SDL_SCANCODE_LCTRL, 0},
+	};
 
 	static const u32 pcjoybinds[][2] = {
 		{CK_A, SDL_CONTROLLER_BUTTON_A},
@@ -780,12 +784,8 @@ static inline void inputLoadBinds(void)
 s32 inputInit(void)
 {
 	// Set SDL hints before initializing the controller subsystem.
-<<<<<<< HEAD
 	if (useHIDAPI)
 	{
-=======
-	if (useHIDAPI) {
->>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 #if SDL_VERSION_ATLEAST(2, 0, 12)
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_GAMECUBE, "1");
 #endif
@@ -815,22 +815,14 @@ s32 inputInit(void)
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAMDECK, "1");
 #endif
 	}
-<<<<<<< HEAD
 	if (useRawInput)
 	{
-=======
-	if (useRawInput) {
->>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 		SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT, "1");
 		SDL_SetHint(SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT, "1");
 	}
 
-<<<<<<< HEAD
 	if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC))
 	{
-=======
-	if (!SDL_WasInit(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC)) {
->>>>>>> 5fd4a431b (fixup whitespace on `SDL_SetHint`)
 		SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
 	}
 
