@@ -41,6 +41,14 @@ There are minor graphics- and gameplay-related issues, and possibly occasional c
 * MacOS: x86_64 (OS 10.9+), arm64 (OS 11.0+)
 * Nintendo Switch: arm64
 
+On the experimental branch, I am targeting issue fixes including improved performance on PS Vita hardware. I will also play around with trying to achieve novel features such as:
+* Use DrugSpy and BombSpy drones, and Slayer rocket launcher in missions they were never intended for (probably in the form of cheats to toggle on/off)
+* Likewise use said drones in Combat Simulator
+* Perhaps try to implement hoverbike into missions it was never intended for
+* Map left and right-hand weapons to discrete left and right controller inputs
+* Online multiplayer for PS Vita
+* Whatever other outlandish ideas take our fancy!
+
 ## Download
 
 Latest [automatic builds](https://github.com/fgsfdsfgs/perfect_dark/releases/tag/ci-dev-build) for supported platforms:
@@ -197,7 +205,7 @@ Controls can be rebound in `pd.ini`. Default control scheme is as follows:
 2. Compile [vitaGL](https://github.com/Rinnegatamante/vitaGL) with this configuration:  
    `make HAVE_GLSL_SUPPORT=1 CIRCULAR_VERTEX_POOL=2 USE_SCRATCH_MEMORY=1 NO_DEBUG=1 DRAW_SPEEDHACK=1 install`
 3. Get the source code:  
-   `git clone --recursive https://github.com/fgsfdsfgs/perfect_dark.git && cd perfect_dark`
+   `git clone --recursive https://github.com/TartanSpartan/perfect_dark.git && cd perfect_dark`
 7. Build:
    * Execute the script: `build_vita.bat`
 8. The resulting executable will be at `vita_release/vpk/pd.armv7.vpk`.
@@ -208,7 +216,7 @@ Alternate compilers or toolchains can be specified by passing `-DCMAKE_TOOLCHAIN
 
 You will need to provide a `jpn-final` or `pal-final` ROM to run executables built for those regions, named `pd.jpn-final.z64` or `pd.pal-final.z64`.
 
-It might be possible to build and run the game on platforms that are not specified in the supported platforms list (e.g. Linux on armv7), but this has not been tested.
+It might be possible to build and run the game on platforms that are not specified in the supported platforms list (e.g. Linux on armv7), but this has not been tested. However, it has been confirmed to build on Ubuntu Touch 20.04 on ARM64. Use `https://github.com/SonicMastr/vdpm` as the basis to build vitasdk if you wish to follow this route.
 
 ## Credits
 
@@ -223,3 +231,4 @@ It might be possible to build and run the game on platforms that are not specifi
 * NicNamSam for the icon;
 * everyone who has submitted pull requests and issues to this repository and tested the port;
 * probably more I'm forgetting.
+* Rinnegatamante and fgsfdsfgs for bringing the ports and underlying technologies as far along as they have.
