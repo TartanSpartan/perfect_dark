@@ -25,8 +25,8 @@ project(pd C CXX)
 
 if(VITA)
   include("${VITASDK}/share/vita.cmake" REQUIRED)
-  set(VITA_APP_NAME "Perfect Dark")
-  set(VITA_TITLEID  "PRFCTDARK")
+  set(VITA_APP_NAME "Perfect Dark Experimental")
+  set(VITA_TITLEID  "PRFCDKEXP")
   set(VITA_VERSION  "01.00")
 endif()
 
@@ -398,11 +398,26 @@ add_custom_target(pd_headers ALL DEPENDS ${JSON_HEADERS})
 # Game target
 
 set(BIN_NAME "pd${BIN_REGION}.${TARGET_ARCH}")
+set(EXP_BIN_NAME "pdexp${BIN_REGION}.${TARGET_ARCH}")
 add_executable(pd ${SRC})
 add_dependencies(pd pd_headers)
 target_link_libraries(pd ${LIBS})
 if(NOT VITA)
   set_target_properties(pd PROPERTIES OUTPUT_NAME "${BIN_NAME}")
+endif()
+
+# Provide a `pdexp` build target alias so Vita packaging rules that expect
+# a `pdexp` target have something to depend on (it forwards to `pd`).
+add_custom_target(pdexp DEPENDS pd)
+
+# Optional helper: create a script and custom target to run the build and
+# capture stdout/stderr into a dedicated log file `build.log` in the build dir.
+option(ENABLE_BUILD_LOG "Create helper target 'build-with-log' to capture build output into a file" ON)
+if(ENABLE_BUILD_LOG)
+  set(_build_log_script "${CMAKE_BINARY_DIR}/build_with_log.sh")
+  file(WRITE "${_build_log_script}" "#!/usr/bin/env bash\nset -euo pipefail\nBUILD_DIR=\"${CMAKE_BINARY_DIR}\"\nLOG_FILE=\"${CMAKE_BINARY_DIR}/build.log\"\nJOBS=\"${CMAKE_BUILD_PARALLEL_LEVEL}\"\nif [ -z \"$JOBS\" ]; then\n  if command -v nproc >/dev/null 2>&1; then JOBS=$(nproc); else JOBS=1; fi\nfi\ncd \"${CMAKE_BINARY_DIR}\"\ncmake --build . -- -j$JOBS 2>&1 | tee \"$LOG_FILE\"\nexit ${PIPESTATUS[0]}\n")
+  file(CHMOD "${_build_log_script}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+  add_custom_target(build-with-log COMMAND bash "${_build_log_script}" WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()
 if(WIN32)
   set_target_properties(pd PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -419,12 +434,14 @@ if(NINTENDO_SWITCH)
 endif()
 
 if(VITA)
-  vita_create_self(${BIN_NAME}.self pd UNSAFE)
+  # create a distinct experimental self filename so launcher packaging can find it
+  set(EXP_BIN_NAME "pdexp${BIN_REGION}.${TARGET_ARCH}")
+  vita_create_self(${EXP_BIN_NAME}.self pd UNSAFE)
 endif()
 
 else() # Launcher
   set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
-  vita_create_vpk(pd.armv7.vpk ${VITA_TITLEID} ${CMAKE_SOURCE_DIR}/vita_release/ntsc/pd.armv7.self
+    vita_create_vpk(pdexp.armv7.vpk ${VITA_TITLEID} ${CMAKE_SOURCE_DIR}/vita_release/ntsc/pdexp.armv7.self
     VERSION ${VITA_VERSION}
     NAME ${VITA_APP_NAME}
     FILE ${CMAKE_SOURCE_DIR}/livearea/icon0.png sce_sys/icon0.png
@@ -432,9 +449,9 @@ else() # Launcher
          ${CMAKE_SOURCE_DIR}/livearea/bg0.png sce_sys/livearea/contents/bg0.png
          ${CMAKE_SOURCE_DIR}/livearea/joanna.png sce_sys/livearea/contents/joanna.png
          ${CMAKE_SOURCE_DIR}/livearea/template.xml sce_sys/livearea/contents/template.xml
-         ${CMAKE_SOURCE_DIR}/livearea/pd.ini pd.ini
-         ${CMAKE_SOURCE_DIR}/vita_release/jap/pd.jpn.armv7.self jap.self
-         ${CMAKE_SOURCE_DIR}/vita_release/pal/pd.pal.armv7.self pal.self
-         ${CMAKE_SOURCE_DIR}/livearea/TROPHY.TRP sce_sys/trophy/PDRK00001_00/TROPHY.TRP
+      ${CMAKE_SOURCE_DIR}/livearea/pd.ini pd.ini
+      ${CMAKE_SOURCE_DIR}/vita_release/jap/pdexp.jpn.armv7.self jap.self
+      ${CMAKE_SOURCE_DIR}/vita_release/pal/pdexp.pal.armv7.self pal.self
+          ${CMAKE_SOURCE_DIR}/livearea/TROPHY.TRP sce_sys/trophy/${VITA_TITLEID}_00/TROPHY.TRP
   )
 endif()

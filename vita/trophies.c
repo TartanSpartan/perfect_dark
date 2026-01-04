@@ -10,7 +10,8 @@ static char signature[160] = {0xb9, 0xdd, 0xe1, 0x3b, 0x01, 0x00};
 static int trp_ctx;
 static int plat_id = -1;
 
-typedef struct {
+typedef struct
+{
 	int sdkVersion;
 	SceCommonDialogParam commonParam;
 	int context;
@@ -18,7 +19,8 @@ typedef struct {
 	uint8_t reserved[128];
 } SceNpTrophySetupDialogParam;
 
-typedef struct {
+typedef struct
+{
 	uint32_t unk[4];
 } SceNpTrophyUnlockState;
 SceNpTrophyUnlockState trophies_unlocks;
@@ -37,8 +39,10 @@ int trophies_available = 0;
 
 volatile int trp_id;
 SceUID trp_request_mutex;
-int trophies_unlocker(SceSize args, void *argp) {
-	for (;;) {
+int trophies_unlocker(SceSize args, void *argp)
+{
+	for (;;)
+	{
 		sceKernelWaitSema(trp_request_mutex, 1, NULL);
 		int local_trp_id = trp_id;
 		int trp_handle;
@@ -48,16 +52,18 @@ int trophies_unlocker(SceSize args, void *argp) {
 	}
 }
 
-int trophies_init() {
-	// Starting sceNpTrophy
-	strcpy(comm_id, "PDRK00001");
+int trophies_init()
+{
+	// Starting sceNpTrophy (experimental ID to avoid clashes with main branch ID)
+	strcpy(comm_id, "PDXP00001");
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NP_TROPHY);
 	sceNpTrophyInit(NULL);
 	int res = sceNpTrophyCreateContext(&trp_ctx, comm_id, signature, 0);
-	if (res < 0) {
+	if (res < 0)
+	{
 #ifdef DEBUG
 		printf("sceNpTrophyCreateContext returned 0x%08X\n", res);
-#endif	
+#endif
 		return res;
 	}
 	SceNpTrophySetupDialogParam setupParam;
@@ -68,37 +74,42 @@ int trophies_init() {
 	setupParam.context = trp_ctx;
 	sceNpTrophySetupDialogInit(&setupParam);
 	static int trophy_setup = SCE_COMMON_DIALOG_STATUS_RUNNING;
-	while (trophy_setup == SCE_COMMON_DIALOG_STATUS_RUNNING) {
+	while (trophy_setup == SCE_COMMON_DIALOG_STATUS_RUNNING)
+	{
 		trophy_setup = sceNpTrophySetupDialogGetStatus();
 		vglSwapBuffers(GL_TRUE);
 	}
 	sceNpTrophySetupDialogTerm();
-	
+
 	// Starting trophy unlocker thread
 	trp_request_mutex = sceKernelCreateSema("trps request", 0, 0, 1, NULL);
 	SceUID tropies_unlocker_thd = sceKernelCreateThread("trophies unlocker", &trophies_unlocker, 0x10000100, 0x10000, 0, 0, NULL);
 	sceKernelStartThread(tropies_unlocker_thd, 0, NULL);
-	
+
 	// Getting current trophy unlocks state
 	int trp_handle;
 	uint32_t dummy;
 	sceNpTrophyCreateHandle(&trp_handle);
 	sceNpTrophyGetTrophyUnlockState(trp_ctx, trp_handle, &trophies_unlocks, &dummy);
 	sceNpTrophyDestroyHandle(trp_handle);
-	
+
 	trophies_available = 1;
 	return res;
 }
 
-uint8_t trophies_is_unlocked(uint32_t id) {
-	if (trophies_available) {
+uint8_t trophies_is_unlocked(uint32_t id)
+{
+	if (trophies_available)
+	{
 		return (trophies_unlocks.unk[id >> 5] & (1 << (id & 31))) > 0;
 	}
 	return 0;
 }
 
-void trophies_unlock(uint32_t id) {
-	if (trophies_available && !trophies_is_unlocked(id)) {
+void trophies_unlock(uint32_t id)
+{
+	if (trophies_available && !trophies_is_unlocked(id))
+	{
 		trophies_unlocks.unk[id >> 5] |= (1 << (id & 31));
 		trp_id = id;
 		sceKernelSignalSema(trp_request_mutex, 1);

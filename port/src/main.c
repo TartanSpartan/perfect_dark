@@ -3,6 +3,7 @@
 #include <PR/ultratypes.h>
 #include <PR/ultrasched.h>
 #include <PR/os_message.h>
+#include <string.h>
 
 #include "lib/main.h"
 #include "bss.h"
@@ -64,9 +65,12 @@ void *bootAllocateStack(s32 threadid, s32 size)
 void bootCreateSched(void)
 {
 	osCreateMesgQueue(&g_MainMesgQueue, g_MainMesgBuf, ARRAYCOUNT(g_MainMesgBuf));
-	if (osTvType == OS_TV_MPAL) {
+	if (osTvType == OS_TV_MPAL)
+	{
 		osCreateScheduler(&g_Sched, NULL, OS_VI_MPAL_LAN1, 1);
-	} else {
+	}
+	else
+	{
 		osCreateScheduler(&g_Sched, NULL, OS_VI_NTSC_LAN1, 1);
 	}
 }
@@ -75,15 +79,19 @@ static void gameInit(void)
 {
 	osMemSize = g_OsMemSizeMb * 1024 * 1024;
 
-	for (s32 i = 0; i < MAX_PLAYERS; ++i) {
+	for (s32 i = 0; i < MAX_PLAYERS; ++i)
+	{
 		struct extplayerconfig *cfg = g_PlayerExtCfg + i;
 		cfg->fovzoommult = cfg->fovzoom ? cfg->fovy / 60.0f : 1.0f;
 	}
 
-	if (g_HudCenter == HUDCENTER_NORMAL) {
+	if (g_HudCenter == HUDCENTER_NORMAL)
+	{
 		g_HudAlignModeL = G_ASPECT_CENTER_EXT;
 		g_HudAlignModeR = G_ASPECT_CENTER_EXT;
-	} else if (g_HudCenter == HUDCENTER_WIDE) {
+	}
+	else if (g_HudCenter == HUDCENTER_WIDE)
+	{
 		g_HudAlignModeL = G_ASPECT_LEFT_EXT | G_ASPECT_WIDE_EXT;
 		g_HudAlignModeR = G_ASPECT_RIGHT_EXT | G_ASPECT_WIDE_EXT;
 	}
@@ -102,7 +110,8 @@ static void cleanup(void)
 #ifdef __vita__
 char audio_arg[32] = {};
 
-void vita_fatal_error(const char *fmt, ...) {
+void vita_fatal_error(const char *fmt, ...)
+{
 	va_list list;
 	char string[512];
 
@@ -127,50 +136,64 @@ void vita_fatal_error(const char *fmt, ...) {
 
 	while (sceMsgDialogGetStatus() != SCE_COMMON_DIALOG_STATUS_FINISHED)
 		vglSwapBuffers(GL_TRUE);
-	
+
 	sceMsgDialogTerm();
 
 	sceKernelExitProcess(0);
-	while (1);
+	while (1)
+		;
 }
 #endif
 
 #ifdef __vita__
-int pd_main (unsigned int argc, void *argv);
-int main(int argc, char **argv) {
+int pd_main(unsigned int argc, void *argv);
+int main(int argc, char **argv)
+{
 	sceSysmoduleLoadModule(SCE_SYSMODULE_RAZOR_CAPTURE);
 	// We need a bigger stack to run Perfect Dark, so we create a new thread with a proper stack size
 	SceUID main_thread = sceKernelCreateThread("Perfect Dark", pd_main, 0x40, 0x800000, 0, 0, NULL);
-	if (main_thread >= 0){
+	if (main_thread >= 0)
+	{
 		sceKernelStartThread(main_thread, 0, NULL);
 	}
 	return sceKernelExitDeleteThread(0);
 }
-int pd_main (unsigned int argc, void *argv) {
+int pd_main(unsigned int argc, void *argv)
+{
 #else
-int main(int argc, const char **argv) {
+int main(int argc, const char **argv)
+{
 #endif
 #ifdef __vita__
 	SceIoStat st;
-	if (sceIoGetstat("ur0:/data/libshacccg.suprx", &st) < 0 && sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st) < 0) {
+	if (sceIoGetstat("ur0:/data/libshacccg.suprx", &st) < 0 && sceIoGetstat("ur0:/data/external/libshacccg.suprx", &st) < 0)
+	{
 		vita_fatal_error("FATAL ERROR: Runtime shader compiler (libshacccg.suprx) not installed!");
 	}
 
 #if VERSION == VERSION_NTSC_FINAL
-	if (sceIoGetstat("ux0:data/pd/pd.ntsc-final.z64", &st) < 0) {
-		if (sceIoGetstat("ux0:data/pd/pd.pal-final.z64", &st) < 0) {
-			if (sceIoGetstat("ux0:data/pd/pd.jpn-final.z64", &st) < 0) {
+	if (sceIoGetstat("ux0:data/pd/pd.ntsc-final.z64", &st) < 0)
+	{
+		if (sceIoGetstat("ux0:data/pd/pd.pal-final.z64", &st) < 0)
+		{
+			if (sceIoGetstat("ux0:data/pd/pd.jpn-final.z64", &st) < 0)
+			{
 				vita_fatal_error("FATAL ERROR: No compatible rom detected!");
-			} else {
+			}
+			else
+			{
 				sceAppMgrLoadExec("app0:jap.self", NULL, NULL);
 			}
-		} else {
+		}
+		else
+		{
 			sceAppMgrLoadExec("app0:pal.self", NULL, NULL);
 		}
 	}
 #endif
 
-	if (sceIoGetstat("ux0:data/pd/pd.ini", &st) < 0) {
+	if (sceIoGetstat("ux0:data/pd/pd.ini", &st) < 0)
+	{
 		FILE *f = fopen("app0:pd.ini", "rb");
 		fseek(f, 0, SEEK_END);
 		size_t sz = ftell(f);
@@ -183,7 +206,7 @@ int main(int argc, const char **argv) {
 		fclose(f);
 		free(buf);
 	}
-	
+
 	scePowerSetArmClockFrequency(444);
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);
@@ -196,14 +219,14 @@ int main(int argc, const char **argv) {
 		"ux0:data/pd",
 		"--savedir",
 		"",
-		0
-	};
+		0};
 	sysInitArgs(7, vita_args);
-#else	
+#else
 	sysInitArgs(argc, argv);
 #endif
 
-	if (!sysArgCheck("--no-crash-handler")) {
+	if (!sysArgCheck("--no-crash-handler"))
+	{
 		crashInit();
 	}
 
@@ -219,7 +242,8 @@ int main(int argc, const char **argv) {
 
 	gameInit();
 
-	if (fsGetModDir()) {
+	if (fsGetModDir())
+	{
 		modConfigLoad(MOD_CONFIG_FNAME);
 	}
 
@@ -231,7 +255,8 @@ int main(int argc, const char **argv) {
 
 	g_MempHeapSize = g_OsMemSize;
 	g_MempHeap = sysMemZeroAlloc(g_MempHeapSize);
-	if (!g_MempHeap) {
+	if (!g_MempHeap)
+	{
 		sysFatalError("Could not alloc %u bytes for memp heap.", g_MempHeapSize);
 	}
 
@@ -242,20 +267,25 @@ int main(int argc, const char **argv) {
 
 	g_StageNum = sysArgGetInt("--boot-stage", STAGE_TITLE);
 
-	if (g_StageNum == STAGE_TITLE && (sysArgCheck("--skip-intro") || g_SkipIntro)) {
+	if (g_StageNum == STAGE_TITLE && (sysArgCheck("--skip-intro") || g_SkipIntro))
+	{
 		// shorthand for --boot-stage 0x26
 		g_StageNum = STAGE_CITRAINING;
-	} else if (g_StageNum < 0x01 || g_StageNum > 0x5d) {
+	}
+	else if (g_StageNum < 0x01 || g_StageNum > 0x5d)
+	{
 		// stage num out of range
 		g_StageNum = STAGE_TITLE;
 	}
 
-	if (g_StageNum != STAGE_TITLE) {
+	if (g_StageNum != STAGE_TITLE)
+	{
 		sysLogPrintf(LOG_NOTE, "boot stage set to 0x%02x", g_StageNum);
 	}
 
 	g_FileAutoSelect = sysArgGetInt("--profile", -1);
-	if (g_FileAutoSelect >= 0) {
+	if (g_FileAutoSelect >= 0)
+	{
 		sysLogPrintf(LOG_NOTE, "player profile set to %d", g_FileAutoSelect);
 	}
 
@@ -276,7 +306,8 @@ PD_CONSTRUCTOR static void gameConfigInit(void)
 	configRegisterInt("Game.DisableMpDeathMusic", &g_MusicDisableMpDeath, 0, 1);
 	configRegisterInt("Game.GEMuzzleFlashes", &g_BgunGeMuzzleFlashes, 0, 1);
 	configRegisterInt("Game.MaxExplosions", &g_MaxExplosions, 6, 96);
-	for (s32 j = 0; j < MAX_PLAYERS; ++j) {
+	for (s32 j = 0; j < MAX_PLAYERS; ++j)
+	{
 		const s32 i = j + 1;
 		configRegisterFloat(strFmt("Game.Player%d.FovY", i), &g_PlayerExtCfg[j].fovy, 5.f, 175.f);
 		configRegisterInt(strFmt("Game.Player%d.FovAffectsZoom", i), &g_PlayerExtCfg[j].fovzoom, 0, 1);

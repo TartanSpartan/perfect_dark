@@ -46,17 +46,20 @@ __attribute__((dllexport)) u32 AmdPowerXpressRequestHighPerformance = 1;
 #define DO_YIELD() _mm_pause()
 #elif defined(PLATFORM_ARM) && (defined(PLATFORM_64BIT) || PLATFORM_ARM == 7 || PLATFORM_ARM == 8)
 // same as YieldProcessor() on ARM Windows
-#define DO_YIELD() __asm__ volatile("dmb ishst\n\tyield":::"memory")
+#define DO_YIELD() __asm__ volatile("dmb ishst\n\tyield" ::: "memory")
 #else
 // fuck it
-#define DO_YIELD() do { } while (0)
+#define DO_YIELD() \
+	do             \
+	{              \
+	} while (0)
 #endif
 
 #endif
 
 #ifdef __vita__
-#define LOG_FNAME "ux0:data/pd/pd.log"
-#define CRASHLOG_FNAME "ux0:data/pd/pd.crash.log"
+#define LOG_FNAME "ux0:data/pd-experimental/pd.log"
+#define CRASHLOG_FNAME "ux0:data/pd-experimental/pd.crash.log"
 #else
 #define LOG_FNAME "pd.log"
 #define CRASHLOG_FNAME "pd.crash.log"
@@ -75,14 +78,16 @@ static inline void sysLogSetPath(const char *fname)
 	// try working dir first
 	snprintf(logPath, sizeof(logPath), "./%s", fname);
 	FILE *f = fopen(logPath, "wb");
-	if (!f) {
+	if (!f)
+	{
 		// try home dir
 		sysGetHomePath(logPath, sizeof(logPath) - 1);
 		strncat(logPath, "/", sizeof(logPath) - 1);
 		strncat(logPath, fname, sizeof(logPath) - 1);
 		f = fopen(logPath, "wb");
 	}
-	if (f) {
+	if (f)
+	{
 		fclose(f);
 	}
 }
@@ -97,7 +102,8 @@ void sysInit(void)
 {
 	startTick = sysGetMicroseconds();
 
-	if (sysArgCheck("--log")) {
+	if (sysArgCheck("--log"))
+	{
 		sysLogSetPath(LOG_FNAME);
 	}
 
@@ -113,11 +119,13 @@ void sysInit(void)
 #ifdef PLATFORM_WIN32
 	// this function is only present on Vista+, so try to import it from kernel32 by hand
 	pfnCreateWaitableTimerExA = (CREATEWAITABLETIMEREXAFN)GetProcAddress(GetModuleHandleA("kernel32.dll"), "CreateWaitableTimerExA");
-	if (pfnCreateWaitableTimerExA) {
+	if (pfnCreateWaitableTimerExA)
+	{
 		// function exists, try to create a hires timer
 		timer = pfnCreateWaitableTimerExA(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
 	}
-	if (!timer) {
+	if (!timer)
+	{
 		// no function or hires timers not supported, fallback to lower resolution timer
 		sysLogPrintf(LOG_WARNING, "SYS: hires waitable timers not available");
 		timer = CreateWaitableTimerA(NULL, FALSE, NULL);
@@ -127,8 +135,10 @@ void sysInit(void)
 
 s32 sysArgCheck(const char *arg)
 {
-	for (s32 i = 1; i < sysArgc; ++i) {
-		if (!strcasecmp(sysArgv[i], arg)) {
+	for (s32 i = 1; i < sysArgc; ++i)
+	{
+		if (!strcasecmp(sysArgv[i], arg))
+		{
 			return 1;
 		}
 	}
@@ -137,9 +147,12 @@ s32 sysArgCheck(const char *arg)
 
 const char *sysArgGetString(const char *arg)
 {
-	for (s32 i = 1; i < sysArgc; ++i) {
-		if (!strcasecmp(sysArgv[i], arg)) {
-			if (i < sysArgc - 1) {
+	for (s32 i = 1; i < sysArgc; ++i)
+	{
+		if (!strcasecmp(sysArgv[i], arg))
+		{
+			if (i < sysArgc - 1)
+			{
 				return sysArgv[i + 1];
 			}
 		}
@@ -149,9 +162,12 @@ const char *sysArgGetString(const char *arg)
 
 s32 sysArgGetInt(const char *arg, s32 defval)
 {
-	for (s32 i = 1; i < sysArgc; ++i) {
-		if (!strcasecmp(sysArgv[i], arg)) {
-			if (i < sysArgc - 1) {
+	for (s32 i = 1; i < sysArgc; ++i)
+	{
+		if (!strcasecmp(sysArgv[i], arg))
+		{
+			if (i < sysArgc - 1)
+			{
 				return strtol(sysArgv[i + 1], NULL, 0);
 			}
 		}
@@ -178,8 +194,7 @@ s32 sysLogIsOpen(void)
 void sysLogPrintf(s32 level, const char *fmt, ...)
 {
 	static const char *prefix[3] = {
-		"", "WARNING: ", "ERROR: "
-	};
+		"", "WARNING: ", "ERROR: "};
 
 	char logmsg[2048];
 
@@ -188,9 +203,11 @@ void sysLogPrintf(s32 level, const char *fmt, ...)
 	vsnprintf(logmsg, sizeof(logmsg), fmt, ap);
 	va_end(ap);
 
-	if (logPath[0]) {
+	if (logPath[0])
+	{
 		FILE *f = fopen(logPath, "ab");
-		if (f) {
+		if (f)
+		{
 			fprintf(f, "%s%s\n", prefix[level], logmsg);
 			fclose(f);
 		}
@@ -204,11 +221,12 @@ void sysFatalError(const char *fmt, ...)
 {
 	static s32 alreadyCrashed = 0;
 
-	if (alreadyCrashed) {
+	if (alreadyCrashed)
+	{
 		abort();
 	}
 
-	char errmsg[2048] = { 0 };
+	char errmsg[2048] = {0};
 
 	alreadyCrashed = 1;
 
@@ -232,18 +250,24 @@ void sysGetExecutablePath(char *outPath, const u32 outLen)
 	// try asking SDL
 	char *sdlPath = SDL_GetBasePath();
 
-	if (sdlPath && *sdlPath) {
+	if (sdlPath && *sdlPath)
+	{
 		// -1 to trim trailing slash
 		const u32 len = strlen(sdlPath) - 1;
-		if (len < outLen) {
+		if (len < outLen)
+		{
 			memcpy(outPath, sdlPath, len);
 			outPath[len] = '\0';
 		}
-	} else if (sysArgc && sysArgv[0] && sysArgv[0][0]) {
+	}
+	else if (sysArgc && sysArgv[0] && sysArgv[0][0])
+	{
 		// get exe path from argv[0]
 		strncpy(outPath, sysArgv[0], outLen - 1);
 		outPath[outLen - 1] = '\0';
-	} else if (outLen > 1) {
+	}
+	else if (outLen > 1)
+	{
 		// give up, use working directory instead
 		outPath[0] = '.';
 		outPath[1] = '\0';
@@ -251,8 +275,10 @@ void sysGetExecutablePath(char *outPath, const u32 outLen)
 
 #ifdef PLATFORM_WIN32
 	// replace all backslashes with forward slashes, windows supports both
-	for (u32 i = 0; i < outLen && outPath[i]; ++i) {
-		if (outPath[i] == '\\') {
+	for (u32 i = 0; i < outLen && outPath[i]; ++i)
+	{
+		if (outPath[i] == '\\')
+		{
 			outPath[i] = '/';
 		}
 	}
@@ -266,14 +292,18 @@ void sysGetHomePath(char *outPath, const u32 outLen)
 	// try asking SDL
 	char *sdlPath = SDL_GetPrefPath("", "perfectdark");
 
-	if (sdlPath && *sdlPath) {
+	if (sdlPath && *sdlPath)
+	{
 		// -1 to trim trailing slash
 		const u32 len = strlen(sdlPath) - 1;
-		if (len < outLen) {
+		if (len < outLen)
+		{
 			memcpy(outPath, sdlPath, len);
 			outPath[len] = '\0';
 		}
-	} else if (outLen > 1) {
+	}
+	else if (outLen > 1)
+	{
 		// give up, use working directory instead
 		outPath[0] = '.';
 		outPath[1] = '\0';
@@ -281,8 +311,10 @@ void sysGetHomePath(char *outPath, const u32 outLen)
 
 #ifdef PLATFORM_WIN32
 	// replace all backslashes with forward slashes, windows supports both
-	for (u32 i = 0; i < outLen && outPath[i]; ++i) {
-		if (outPath[i] == '\\') {
+	for (u32 i = 0; i < outLen && outPath[i]; ++i)
+	{
+		if (outPath[i] == '\\')
+		{
 			outPath[i] = '/';
 		}
 	}
@@ -319,7 +351,7 @@ void sysSleep(const s64 hns)
 	SetWaitableTimer(timer, &li, 0, NULL, NULL, FALSE);
 	WaitForSingleObject(timer, INFINITE);
 #else
-	const struct timespec spec = { 0, hns * 100 };
+	const struct timespec spec = {0, hns * 100};
 	nanosleep(&spec, NULL);
 #endif
 }
