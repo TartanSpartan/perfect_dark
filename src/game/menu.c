@@ -4852,6 +4852,30 @@ void menuProcessInput(void)
 				starttap = true;
 			}
 
+			/*
+			 * Also accept the raw controller D-Pad virtual keys for menu
+			 * navigation. This ensures the physical D-Pad will navigate
+			 * menus even if the player has rebound the D-Pad to gameplay
+			 * actions in their config.
+			 */
+			{
+				s32 vkbase = VK_JOY1_BEGIN + contpadnums[i] * INPUT_MAX_CONTROLLER_BUTTONS;
+				s32 off_up = VK_JOY1_DPAD_UP - VK_JOY1_BEGIN;
+				s32 off_down = VK_JOY1_DPAD_DOWN - VK_JOY1_BEGIN;
+				s32 off_left = VK_JOY1_DPAD_LEFT - VK_JOY1_BEGIN;
+				s32 off_right = VK_JOY1_DPAD_RIGHT - VK_JOY1_BEGIN;
+
+				if (inputKeyJustPressed(vkbase + off_up))    ytapdir = -1;
+				if (inputKeyJustPressed(vkbase + off_down))  ytapdir =  1;
+				if (inputKeyJustPressed(vkbase + off_left))  xtapdir = -1;
+				if (inputKeyJustPressed(vkbase + off_right)) xtapdir =  1;
+
+				if (inputKeyPressed(vkbase + off_up))    yhelddir = -1;
+				if (inputKeyPressed(vkbase + off_down))  yhelddir =  1;
+				if (inputKeyPressed(vkbase + off_left))  xhelddir = -1;
+				if (inputKeyPressed(vkbase + off_right)) xhelddir =  1;
+			}
+
 			if (buttons & R_TRIG) {
 				inputs.shoulder = 1;
 			}

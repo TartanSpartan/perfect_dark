@@ -27,6 +27,11 @@ if(VITA)
   include("${VITASDK}/share/vita.cmake" REQUIRED)
   set(VITA_APP_NAME "Perfect Dark Experimental")
   set(VITA_TITLEID  "PRFCDKEXP")
+  # Trophy packs use a separate communication ID (CommID) which must match:
+  # - The folder name under sce_sys/trophy/<COMMID>_00/
+  # - The CommID passed to sceNpTrophyCreateContext
+  # - The CommID baked into the TROPHY.TRP itself
+  set(VITA_TROPHY_COMM_ID "PDXP00001")
   set(VITA_VERSION  "01.00")
 endif()
 
@@ -406,6 +411,10 @@ if(NOT VITA)
   set_target_properties(pd PROPERTIES OUTPUT_NAME "${BIN_NAME}")
 endif()
 
+if(VITA)
+  target_compile_definitions(pd PRIVATE PD_VITA_COMM_ID="${VITA_TROPHY_COMM_ID}")
+endif()
+
 # Provide a `pdexp` build target alias so Vita packaging rules that expect
 # a `pdexp` target have something to depend on (it forwards to `pd`).
 add_custom_target(pdexp DEPENDS pd)
@@ -415,7 +424,19 @@ add_custom_target(pdexp DEPENDS pd)
 option(ENABLE_BUILD_LOG "Create helper target 'build-with-log' to capture build output into a file" ON)
 if(ENABLE_BUILD_LOG)
   set(_build_log_script "${CMAKE_BINARY_DIR}/build_with_log.sh")
-  file(WRITE "${_build_log_script}" "#!/usr/bin/env bash\nset -euo pipefail\nBUILD_DIR=\"${CMAKE_BINARY_DIR}\"\nLOG_FILE=\"${CMAKE_BINARY_DIR}/build.log\"\nJOBS=\"${CMAKE_BUILD_PARALLEL_LEVEL}\"\nif [ -z \"$JOBS\" ]; then\n  if command -v nproc >/dev/null 2>&1; then JOBS=$(nproc); else JOBS=1; fi\nfi\ncd \"${CMAKE_BINARY_DIR}\"\ncmake --build . -- -j$JOBS 2>&1 | tee \"$LOG_FILE\"\nexit ${PIPESTATUS[0]}\n")
+  file(WRITE "${_build_log_script}"
+    "#!/usr/bin/env bash\n"
+    "set -euo pipefail\n"
+    "BUILD_DIR=\"${CMAKE_BINARY_DIR}\"\n"
+    "LOG_FILE=\"${CMAKE_BINARY_DIR}/build.log\"\n"
+    "JOBS=\"${CMAKE_BUILD_PARALLEL_LEVEL}\"\n"
+    "if [ -z \"\$JOBS\" ]; then\n"
+    "  if command -v nproc >/dev/null 2>&1; then JOBS=$(nproc); else JOBS=1; fi\n"
+    "fi\n"
+    "cd \"${CMAKE_BINARY_DIR}\"\n"
+    "cmake --build . -- -j\$JOBS 2>&1 | tee \"\$LOG_FILE\"\n"
+    "exit \${PIPESTATUS[0]}\n"
+  )
   file(CHMOD "${_build_log_script}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
   add_custom_target(build-with-log COMMAND bash "${_build_log_script}" WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
 endif()
@@ -440,7 +461,7 @@ if(VITA)
 endif()
 
 else() # Launcher
-  set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
+  set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12 -s NP_COMMUNICATION_ID=${VITA_TROPHY_COMM_ID}")
     vita_create_vpk(pdexp.armv7.vpk ${VITA_TITLEID} ${CMAKE_SOURCE_DIR}/vita_release/ntsc/pdexp.armv7.self
     VERSION ${VITA_VERSION}
     NAME ${VITA_APP_NAME}
@@ -452,6 +473,6 @@ else() # Launcher
       ${CMAKE_SOURCE_DIR}/livearea/pd.ini pd.ini
       ${CMAKE_SOURCE_DIR}/vita_release/jap/pdexp.jpn.armv7.self jap.self
       ${CMAKE_SOURCE_DIR}/vita_release/pal/pdexp.pal.armv7.self pal.self
-          ${CMAKE_SOURCE_DIR}/livearea/TROPHY.TRP sce_sys/trophy/${VITA_TITLEID}_00/TROPHY.TRP
+          ${CMAKE_SOURCE_DIR}/livearea/TROPHY.TRP sce_sys/trophy/${VITA_TROPHY_COMM_ID}_00/TROPHY.TRP
   )
 endif()

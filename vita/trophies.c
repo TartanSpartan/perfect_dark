@@ -4,6 +4,10 @@
 
 #define DEBUG
 
+#ifndef PD_VITA_COMM_ID
+#define PD_VITA_COMM_ID "PDXP00001"
+#endif
+
 static char comm_id[12] = {0};
 static char signature[160] = {0xb9, 0xdd, 0xe1, 0x3b, 0x01, 0x00};
 
@@ -55,7 +59,7 @@ int trophies_unlocker(SceSize args, void *argp)
 int trophies_init()
 {
 	// Starting sceNpTrophy (experimental ID to avoid clashes with main branch ID)
-	strcpy(comm_id, "PDXP00001");
+	snprintf(comm_id, sizeof(comm_id), "%s", PD_VITA_COMM_ID);
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NP_TROPHY);
 	sceNpTrophyInit(NULL);
 	int res = sceNpTrophyCreateContext(&trp_ctx, comm_id, signature, 0);
