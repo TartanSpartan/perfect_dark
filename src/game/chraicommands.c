@@ -6339,6 +6339,8 @@ bool aiDetectEnemyOnSameFloor(void)
 					&& (chr->hidden & CHRHFLAG_ANTINONINTERACTABLE) == 0
 					&& y - chr->prop->pos.y > -200
 					&& y - chr->prop->pos.y < 200
+					// Ensure that the enemy AI won't just immediately attack an EyeSpy on detection if the coop character is a simulant
+					&& CHRRACE(chr) != RACE_EYESPY
 					&& ((g_Vars.chrdata->hidden & CHRHFLAG_PSYCHOSISED) == 0
 						|| (chr->hidden & CHRHFLAG_ANTINONINTERACTABLE) == 0
 						|| (chr->hidden & CHRHFLAG_DONTSHOOTME))
@@ -6421,6 +6423,8 @@ bool aiDetectEnemy(void)
 					&& (chr->chrflags & CHRCFLAG_HIDDEN) == 0
 					&& (chr->hidden & CHRHFLAG_DISGUISED) == 0
 					&& chr->team != TEAM_NONCOMBAT
+					// Ensure that the enemy AI won't just immediately attack an EyeSpy on detection if the coop character is a simulant
+					&& CHRRACE(chr) != RACE_EYESPY
 					&& (
 						(g_Vars.chrdata->hidden & CHRHFLAG_PSYCHOSISED) == 0
 						|| (chr->hidden & CHRHFLAG_ANTINONINTERACTABLE) == 0
