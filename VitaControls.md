@@ -10,7 +10,7 @@ L3: D-pad Down (cycle crouch)
 
 R2: Circle + R1 (secondary fire quick trigger activate)
 
-R3: Cross + Square (reload, or also remote mine "A+B" instant detonate!)
+R3: Cross + Square (reload/open doors/grab overcrate or hoverbike/interact with terminals/double tap to mount or dismount hoverbike, or also remote mine "A+B" instant detonate!)
 
 For the secondary fire quick trigger, I recommend not using it for all weapons. Some make a lot of sense for it to so as to use rapid on-the-fly alternative attacks e.g. certain handguns: Pistol Whip, SuperDragon: Grenade Launcher and Phoenix: Explosive Shells. However, this won't follow along for other weapons like the CMP-150 which requires one of its modes to be active at a time. I leave it to the players to figure out for themselves which weapons are best suited for it.
 
@@ -46,4 +46,4 @@ Start: Pause menu
 
 Select: Cycle crouch
 
-Over time, I am open to adding more configurations such as DS4 (especially important for PSTV hardware) and basic PS Vita button-only input (stripped down from this current configuration). If anyone can assist with contributing alternative grip accessory configurations, that would be much appreciated.
+Over time, I am open to adding more configurations such as DS4 (especially important for PSTV hardware) and basic PS Vita button-only input (stripped down from this current configuration, alternatively gamers are welcome to try the macros with the four corner virtual buttons on the rear touchpad). If anyone can assist with contributing alternative grip accessory configurations, that would be much appreciated.
