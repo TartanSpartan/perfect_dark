@@ -263,7 +263,11 @@ static u32 convertCover(u8 *dst, u32 dstpos, u8 *src, u32 srcpos, int num_covers
     return dstpos;
 }
 
+#ifdef __vita__
 #define ALIGN_4(v) (((v) + 3) & ~3)
+#else
+#define ALIGN_4(v) (v)
+#endif
 
 static u32 convertPadsFile(u8 *dst, u8 *src)
 {
