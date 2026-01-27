@@ -1,19 +1,18 @@
 #include "guint.h"
 
-#define x xyz[0]
-#define y xyz[1]
-#define z xyz[2]
-
 void guAlignF(float mf[4][4], float a, float *xyz)
 {
-	xyz[0] = -xyz[0];
-	xyz[1] = -xyz[1];
-	xyz[2] = -xyz[2];
+	// Use local copies to avoid modifying the original values; should correct a muzzle flare issue for MagSec 4 and possibly certain other firearms
+	float local[3] = { -xyz[0], -xyz[1], -xyz[2] };
+	float x, y, z;
 	
 	static float dtor = 3.1415926f / 180.0f;
 	float s, c, h, hinv;
 
-	guNormalize(xyz);
+	guNormalize(local);
+	x = local[0];
+	y = local[1];
+	z = local[2];
 
 	a *= dtor;
 	s = sinf(a);
