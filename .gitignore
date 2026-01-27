@@ -48,3 +48,7 @@ pd.log
 dist/vita/
 plugin/
 sceCtrl\ routines.txt
+endscreen.old.c
+PC/*
+how 3524ec73b --stat
+.git.bak
