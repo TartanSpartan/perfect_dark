@@ -41,18 +41,38 @@ int sceNpTrophyGetTrophyUnlockState(int ctx, int handle, SceNpTrophyUnlockState 
 
 int trophies_available = 0;
 
-volatile int trp_id;
-SceUID trp_request_mutex;
+#define TRP_QUEUE_SIZE 32
+// Simple circular queue for pending trophy unlock requests.
+// Using a queue (instead of a single shared `trp_id` variable) avoids
+// a race where multiple trophies unlocked in quick succession would
+// overwrite each other and only the last one would be processed.
+// This ensures that multiple trophies can be unlocked one after another
+// if their unlock conditions are met for the same mission
+static volatile int trp_queue[TRP_QUEUE_SIZE];
+static volatile int trp_queue_head = 0; // next position to write
+static volatile int trp_queue_tail = 0; // next position to read
+SceUID trp_request_mutex; // semaphore counting pending items
+SceUID trp_queue_mutex;   // mutex protecting head/tail access
+
 int trophies_unlocker(SceSize args, void *argp)
 {
 	for (;;)
 	{
 		sceKernelWaitSema(trp_request_mutex, 1, NULL);
-		int local_trp_id = trp_id;
+		
+		sceKernelWaitSema(trp_queue_mutex, 1, NULL);
+		int local_trp_id = trp_queue[trp_queue_tail];
+		trp_queue_tail = (trp_queue_tail + 1) % TRP_QUEUE_SIZE;
+		sceKernelSignalSema(trp_queue_mutex, 1);
+		
 		int trp_handle;
 		sceNpTrophyCreateHandle(&trp_handle);
 		sceNpTrophyUnlockTrophy(trp_ctx, trp_handle, local_trp_id, &plat_id);
 		sceNpTrophyDestroyHandle(trp_handle);
+        
+		// Wait a short time between pops so the UI has time to display
+		// each trophy notification one after another. Delay is in microseconds.
+		sceKernelDelayThread(2000000); // 2000 ms (2 seconds)
 	}
 }
 
@@ -86,7 +106,8 @@ int trophies_init()
 	sceNpTrophySetupDialogTerm();
 
 	// Starting trophy unlocker thread
-	trp_request_mutex = sceKernelCreateSema("trps request", 0, 0, 1, NULL);
+	trp_queue_mutex = sceKernelCreateSema("trps queue", 0, 1, 1, NULL);
+	trp_request_mutex = sceKernelCreateSema("trps request", 0, 0, TRP_QUEUE_SIZE, NULL);
 	SceUID tropies_unlocker_thd = sceKernelCreateThread("trophies unlocker", &trophies_unlocker, 0x10000100, 0x10000, 0, 0, NULL);
 	sceKernelStartThread(tropies_unlocker_thd, 0, NULL);
 
@@ -115,7 +136,15 @@ void trophies_unlock(uint32_t id)
 	if (trophies_available && !trophies_is_unlocked(id))
 	{
 		trophies_unlocks.unk[id >> 5] |= (1 << (id & 31));
-		trp_id = id;
+		// Enqueue the trophy id for the unlocker thread to process.
+		// Protect head/tail with a small mutex to avoid concurrent writes
+		// from multiple threads calling `trophies_unlock` at once.
+		sceKernelWaitSema(trp_queue_mutex, 1, NULL);
+		trp_queue[trp_queue_head] = id;
+		trp_queue_head = (trp_queue_head + 1) % TRP_QUEUE_SIZE;
+		sceKernelSignalSema(trp_queue_mutex, 1);
+
+		// Signal the unlocker that there is at least one pending trophy.
 		sceKernelSignalSema(trp_request_mutex, 1);
 	}
 }
