@@ -1234,6 +1234,7 @@ Gfx *lvRender(Gfx *gdl)
 				}
 
 				gdl = viRenderViewportEdges(gdl);
+				gdl = bgScissorToViewport(gdl);
 				gdl = skyRender(gdl);
 				bgTick();
 				lightsTick();
