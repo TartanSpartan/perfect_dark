@@ -58,8 +58,8 @@ __attribute__((dllexport)) u32 AmdPowerXpressRequestHighPerformance = 1;
 #endif
 
 #ifdef __vita__
-#define LOG_FNAME "ux0:data/pd-experimental/pd.log"
-#define CRASHLOG_FNAME "ux0:data/pd-experimental/pd.crash.log"
+#define LOG_FNAME "ux0:data/pd/pd.log"
+#define CRASHLOG_FNAME "ux0:data/pd/pd.crash.log"
 #else
 #define LOG_FNAME "pd.log"
 #define CRASHLOG_FNAME "pd.crash.log"
@@ -76,11 +76,21 @@ static inline void sysLogSetPath(const char *fname)
 {
 	// figure out where the log is and clear it
 	// try working dir first
-	snprintf(logPath, sizeof(logPath), "./%s", fname);
-	FILE *f = fopen(logPath, "wb");
+	//snprintf(logPath, sizeof(logPath), "./%s", fname);
+	//FILE *f = fopen(logPath, "wb");
+
+	// First try the path as given (this allows platform-specific
+	// absolute paths such as "ux0:data/pd/..." on Vita).
+	FILE *f = fopen(fname, "wb");
 	if (!f)
 	{
-		// try home dir
+		// try working dir next
+		snprintf(logPath, sizeof(logPath), "./%s", fname);
+		f = fopen(logPath, "wb");
+	}
+	if (!f)
+	{
+		// try home dir last
 		sysGetHomePath(logPath, sizeof(logPath) - 1);
 		strncat(logPath, "/", sizeof(logPath) - 1);
 		strncat(logPath, fname, sizeof(logPath) - 1);
@@ -106,6 +116,13 @@ void sysInit(void)
 	{
 		sysLogSetPath(LOG_FNAME);
 	}
+
+#ifdef __vita__
+	// Ensure logs are written to the ux0 path on Vita even if the
+	// --log flag wasn't supplied to the process that launched the
+	// app thread. This guarantees `ux0:data/pd/pd.log` is created.
+	sysLogSetPath(LOG_FNAME);
+#endif
 
 #ifdef VERSION_HASH
 	sysLogPrintf(LOG_NOTE, "version: " VERSION_BRANCH " " VERSION_HASH " (" VERSION_TARGET ")");

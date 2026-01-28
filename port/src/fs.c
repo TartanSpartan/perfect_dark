@@ -41,9 +41,62 @@ static s32 fsPathIsWritable(const char *path)
 #endif
 }
 
+// Create directories recursively for a given full path. This will try to
+// create each intermediate component so that a later fopen("wb") can
+// succeed even when parent directories are missing (useful on platforms
+// where the SDL pref path may not create all components).
+static void fsCreateDirRecursive(const char *fullpath)
+{
+	char tmp[FS_MAXPATH + 1];
+	size_t len = strlen(fullpath);
+
+	if (len == 0 || len >= sizeof(tmp)) {
+		return;
+	}
+
+	// copy the path and ensure null termination
+	strncpy(tmp, fullpath, sizeof(tmp));
+	tmp[sizeof(tmp) - 1] = '\0';
+
+	// Skip over path prefixes that shouldn't be created as directories:
+	// Unix root (/), Windows drive (C:), or Vita device (ux0:)
+	char *p = tmp;
+	if (p[0] == '/') {
+		p++;
+	} else {
+		// Skip device/drive prefix (e.g., "ux0:" or "C:")
+		char *colon = strchr(p, ':');
+		if (colon && colon - p <= 3) {
+			p = colon + 1;
+			if (*p == '/') p++;
+		}
+	}
+
+	// Iterate through the path, creating each prefix when missing
+	for (; *p; ++p) {
+		if (*p == '/') {
+			*p = '\0';
+			if (fsFileSize(tmp) < 0) {
+				if (fsCreateDir(tmp) != 0) {
+					sysLogPrintf(LOG_WARNING, "fsCreateDirRecursive: could not create %s", tmp);
+				}
+			}
+			*p = '/';
+		}
+	}
+
+	// create the final directory
+	if (fsFileSize(tmp) < 0) {
+		if (fsCreateDir(tmp) != 0) {
+			sysLogPrintf(LOG_WARNING, "fsCreateDirRecursive: could not create %s", tmp);
+		}
+	}
+}
+
 s32 fsPathIsAbsolute(const char *path)
 {
- return (path[0] == '/' || (isalpha((unsigned char)path[0]) && path[1] == ':'));
+	// Check for Unix absolute path, Windows drive letter (C:), or Vita device (ux0:)
+	return (path[0] == '/' || (isalpha((unsigned char)path[0]) && path[1] == ':') || (strlen(path) > 3 && isalpha((unsigned char)path[0]) && path[3] == ':'));
 }
 
 s32 fsPathIsCwdRelative(const char *path)
@@ -172,6 +225,21 @@ s32 fsInit(void)
 	}
 
 	strncpy(saveDir, fsFullPath(path), FS_MAXPATH);
+
+	// Ensure the save directory exists. On some platforms (e.g. Vita)
+	// the preference path may not be present and fopen() will fail when
+	// trying to create files. Try to create it here to avoid later
+	// write failures when saving (mp setups, configs, etc.). Players
+	// may wish to import their saves from multiplayer-friendly platforms
+	// like PSTV, and should be able to save configs e.g. for solo play
+	// of Combat Simulator on Vita. Create intermediate directories
+	// as needed.
+	if (fsFileSize(saveDir) < 0) {
+		fsCreateDirRecursive(saveDir);
+		if (fsCreateDir(saveDir) < 0) {
+			sysLogPrintf(LOG_WARNING, "fsInit: could not create save dir %s", saveDir);
+		}
+	}
 
 	if (modDir[0]) {
 		sysLogPrintf(LOG_NOTE, " mod dir: %s", modDir);

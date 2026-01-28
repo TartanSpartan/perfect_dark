@@ -211,16 +211,17 @@ int main(int argc, const char **argv)
 	scePowerSetBusClockFrequency(222);
 	scePowerSetGpuClockFrequency(222);
 	scePowerSetGpuXbarClockFrequency(166);
-	const char *vita_args[8] = {
+	const char *vita_args[9] = {
 		"ux0:data/pd",
 		"--basedir",
 		"ux0:data/pd",
 		"--moddir",
 		"ux0:data/pd",
 		"--savedir",
-		"",
+		"ux0:data/pd",
+		"--log",
 		0};
-	sysInitArgs(7, vita_args);
+	sysInitArgs(8, vita_args);
 #else
 	sysInitArgs(argc, argv);
 #endif
