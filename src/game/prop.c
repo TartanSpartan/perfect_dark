@@ -40,6 +40,10 @@
 #include "data.h"
 #include "types.h"
 
+#ifdef DEBUG_ARTIFACT_LOS
+#include <stdio.h>
+#endif
+
 s16 *g_RoomPropListChunkIndexes;
 struct roomproplistchunk *g_RoomPropListChunks;
 struct prop *g_InteractProp;
@@ -1031,6 +1035,20 @@ bool shotTestLos(struct coord *gunpos2d, struct coord *gundir2d, struct coord *g
 	spc8[1] = -1;
 	portal00018148(&shotdata.gunpos3d, endpos3d, spc8, spb8, rooms, 30);
 
+#ifdef DEBUG_ARTIFACT_LOS
+{
+	s32 _ri = 0;
+	printf("DEBUG_ARTIFACT_LOS: shotTestLos camera=(%f,%f,%f) end=(%f,%f,%f) rooms:",
+		shotdata.gunpos3d.x, shotdata.gunpos3d.y, shotdata.gunpos3d.z,
+		endpos3d->x, endpos3d->y, endpos3d->z);
+	while (_ri < 30 && rooms[_ri] != -1) {
+		printf(" %d", rooms[_ri]);
+		_ri++;
+	}
+	printf("\n");
+}
+#endif
+
 	roomsptr = rooms;
 
 	while (*roomsptr != -1) {
@@ -1043,11 +1061,23 @@ bool shotTestLos(struct coord *gunpos2d, struct coord *gundir2d, struct coord *g
 	// Check for BG hits first
 	for (i = 0; rooms[i] != -1; i++) {
 		if (bgTestHitInRoom(&shotdata.gunpos3d, endpos3d, rooms[i], &hitthing)) {
+#ifdef DEBUG_ARTIFACT_LOS
+			printf("DEBUG_ARTIFACT_LOS: bgTestHitInRoom hit room %d at (%f,%f,%f) end=(%f,%f,%f)\n",
+				rooms[i], hitthing.pos.x, hitthing.pos.y, hitthing.pos.z,
+				endpos3d->x, endpos3d->y, endpos3d->z);
+#endif
 			// check if it's far enough away from the end point
 			if (fabsf(hitthing.pos.x - endpos3d->x) >= 0.1f ||
 					fabsf(hitthing.pos.y - endpos3d->y) >= 0.1f ||
 					fabsf(hitthing.pos.z - endpos3d->z) >= 0.1f) {
+#ifdef DEBUG_ARTIFACT_LOS
+				printf("DEBUG_ARTIFACT_LOS: treating hit as BLOCK (obstruction)\n");
+#endif
 				return false;
+			} else {
+#ifdef DEBUG_ARTIFACT_LOS
+				printf("DEBUG_ARTIFACT_LOS: treating hit as NOT_BLOCK (near endpoint)\n");
+#endif
 			}
 		}
 	}
