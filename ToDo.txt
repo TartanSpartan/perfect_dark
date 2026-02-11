@@ -1,6 +1,0 @@
-Elvis' proxy mine doesn't give a "Received a..." caption on Crash Site.
-Lens flare shows up in locations where sun isn't visible on Crash Site
-In general: if a mission-critical NPC is knocked out, say they've been incapacitated, not killed
-Tighten up enemy vision so that they can't shoot you when you're behind cover (if they do fire, the shots should not land)
-Cause smoke and explosions to not impact performance so much on Vita (e.g. get down on the floor, shoot a rapidfire weapon into it, big FPS drop)
-Weird rare bug where the action fast forwards: dangerous for the player, is this to do with frameskip or something?
