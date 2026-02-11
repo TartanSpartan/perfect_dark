@@ -16,9 +16,6 @@
 #include "lib/mtx.h"
 #include "data.h"
 #include "types.h"
-#ifdef DEBUG_ARTIFACT_LOS
-#include <stdio.h>
-#endif
 #ifndef PLATFORM_N64
 #include "lib/collision.h"
 #include "lib/lib_17ce0.h"
@@ -205,22 +202,6 @@ bool artifactTestLos(struct coord *spec, struct coord *roompos, s32 xi, s32 yi)
 	f32 crosspos[2] = { (f32)xi, (f32)yi };
 	cam0f0b4c3c(crosspos, &gundir2d, 1.f);
 	mtx4RotateVec(camGetProjectionMtxF(), &gundir2d, &gundir3d);
-
-#ifdef DEBUG_ARTIFACT_LOS
-{
-	struct screenbox box;
-	s32 portalnum;
-	printf("DEBUG_ARTIFACT_LOS: artifactTestLos screen=(%d,%d) worldend=(%f,%f,%f)\n", xi, yi, endpos.x, endpos.y, endpos.z);
-	for (portalnum = 0; g_BgPortals[portalnum].verticesoffset != 0; portalnum++) {
-		if (bgGetPortalScreenBbox(portalnum, &box)) {
-			if (xi >= box.xmin && xi <= box.xmax && yi >= box.ymin && yi <= box.ymax) {
-				printf("DEBUG_ARTIFACT_LOS: artifact inside portal %d bbox=(%d,%d,%d,%d) closed=%d\n",
-					portalnum, box.xmin, box.ymin, box.xmax, box.ymax, PORTAL_IS_CLOSED(portalnum));
-			}
-		}
-	}
-}
-#endif
 
 	return shotTestLos(&gunpos2d, &gundir2d, &gunpos3d, &gundir3d, &endpos);
 }
