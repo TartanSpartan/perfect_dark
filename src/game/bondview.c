@@ -2815,6 +2815,33 @@ Gfx *bviewDrawIrBinoculars(Gfx *gdl)
 	gDPSetCombineMode(gdl++, G_CC_PRIMITIVE, G_CC_PRIMITIVE);
 	gDPSetPrimColor(gdl++, 0, 0, 0x00, 0x00, 0x00, 0xff);
 
+	// Vita-only: fill the full top/bottom bands outside the lens to avoid
+	// any 1-pixel gaps caused by per-line rounding. This guarantees
+	// the outer regions are black before finer per-line masking and
+	// helps ensure that the view doesn't render incorrectly during explosions
+#ifdef __vita__
+	{
+		s32 topbandend = centrey - radius;
+		s32 bottombandstart = centrey + radius;
+
+		if (topbandend < viewtop) {
+			topbandend = viewtop;
+		}
+
+		if (bottombandstart > viewbottom) {
+			bottombandstart = viewbottom;
+		}
+
+		if (topbandend > viewtop) {
+			gDPFillRectangle(gdl++, viewleft, viewtop, viewright, topbandend);
+		}
+
+		if (bottombandstart < viewbottom) {
+			gDPFillRectangle(gdl++, viewleft, bottombandstart, viewright, viewbottom);
+		}
+	}
+#endif
+
 	for (y = viewtop; y < viewbottom; y++) {
 		s32 ytocentre = centrey - y;
 		s32 sqytocentre = ytocentre * ytocentre;
@@ -2852,6 +2879,36 @@ Gfx *bviewDrawIrBinoculars(Gfx *gdl)
 #endif
 		}
 	}
+
+#ifdef __vita__
+	// Vita fix: camera shake shifts all viewports/scissors via
+	// videoSetWindowOffset(), creating thin edge strips at the display
+	// borders that no rendering covers. On the N64 this was not an issue
+	// because shake was done via VI scanout shifting, which never created
+	// gaps. The clear at frame start should make these strips black, but
+	// VitaGL may not reliably clear the full framebuffer with MSAA.
+	// Fix: widen the scissor and draw extra black lines beyond the normal
+	// viewport range so the binoculars mask covers the shake-exposed area.
+	{
+		// Max shake intensity is 14 game-coord pixels (see viShake()).
+		// Each game pixel maps to ~2.47 display pixels on Vita (544/220).
+		// We need ceil(14 / 2.47) ≈ 6 extra lines, but use 8 for safety.
+		s32 extend = 8;
+
+		// Expand scissor to include the extended area
+		gDPSetScissor(gdl++, G_SC_NON_INTERLACE,
+				viewleft, viewtop, viewright, viewbottom + extend);
+
+		// Draw black fill rects below the normal mask area
+		for (y = viewbottom; y < viewbottom + extend; y++) {
+			gdl = bviewDrawIrRect(gdl, viewleft, y, viewright, y + 1);
+		}
+
+		// Restore original scissor
+		gDPSetScissor(gdl++, G_SC_NON_INTERLACE,
+				viewleft, viewtop, viewright, viewbottom);
+	}
+#endif
 
 	return gdl;
 }

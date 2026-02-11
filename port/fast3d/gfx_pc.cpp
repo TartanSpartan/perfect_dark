@@ -2687,6 +2687,43 @@ extern "C" void gfx_run(Gfx* commands) {
     rendering_state.scissor = {};
     gfx_run_dl(commands);
     gfx_flush();
+
+
+#ifdef __vita__
+    // Vita fix: camera shake shifts all viewports/scissors via
+    // videoSetWindowOffset(), which can leave thin edge strips at the
+    // display borders uncovered by rendering. VitaGL may not reliably
+    // clear these strips. Use a direct glClear with a targeted scissor
+    // to black out any exposed edge strip after all rendering is done.
+    // Improves rendering with the IR Scanner goggles during explosions.
+    if (!game_renders_to_framebuffer && gfx_current_game_window_viewport.y != 0)
+    {
+        int offset = gfx_current_game_window_viewport.y;
+        int w = gfx_current_window_dimensions.width;
+        int h = gfx_current_window_dimensions.height;
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+        if (offset > 0)
+        {
+            // Viewport shifted down → top edge exposed (high GL y)
+            glScissor(0, h - offset, w, offset);
+        }
+        else
+        {
+            // Viewport shifted up → bottom edge exposed (low GL y)
+            glScissor(0, 0, w, -offset);
+        }
+
+        glEnable(GL_SCISSOR_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Force state resync on next draw call
+        rdp.viewport_or_scissor_changed = true;
+        rendering_state.scissor = {};
+    }
+#endif
+
     gfxFramebuffer = 0;
 
     if (game_renders_to_framebuffer) {
