@@ -52,3 +52,10 @@ endscreen.old.c
 PC/*
 how 3524ec73b --stat
 .git.bak
+ToDo.txt
+perfect_dark-PSP/
+src/game/propobj.c.save
+src/game/propobj.c.save.1
+src/game/propobj.diff
+src/game/propobj_canonical.diff
+src/game/propobjold.c
