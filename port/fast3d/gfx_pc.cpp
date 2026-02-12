@@ -24,6 +24,8 @@ extern "C" {
     void matmul4_neon(float m0[16], float m1[16], float d[16]);
 };
 #include <vitasdk.h>
+#include <vitaGL.h>
+
 #endif
 
 #ifndef _LANGUAGE_C
