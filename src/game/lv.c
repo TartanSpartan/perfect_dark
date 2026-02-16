@@ -1209,7 +1209,20 @@ Gfx *lvRender(Gfx *gdl)
 				}
 
 				var80084050++;
-			} else if (g_Vars.currentplayer->gunctrl.loadall
+			} 
+		/*
+		 * Safeguard: while the Defection intro can be delayed by AI script
+		 * yields, keep the lockscreen active for the first few seconds of
+		 * the stage until the cutscene actually begins. This prevents the
+		 * gameplay first-person view from flashing briefly before the
+		 * DataDyne Central intro cutscene.
+		 */
+		if (g_Vars.stagenum == STAGE_DEFECTION
+			&& g_Vars.lvframenum <= TICKS(3) /* ~3 seconds */
+			&& g_Vars.tickmode != TICKMODE_CUTSCENE) {
+			g_Vars.lockscreen = 1;
+		}
+			else if (g_Vars.currentplayer->gunctrl.loadall
 					&& var80075d60 == 2
 					&& g_Vars.currentplayer->cameramode != CAMERAMODE_THIRDPERSON
 					&& g_Vars.currentplayer->cameramode != CAMERAMODE_EYESPY
