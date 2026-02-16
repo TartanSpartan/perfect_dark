@@ -1530,6 +1530,16 @@ int gladLoadGLLoader(GLADloadproc load) {
 #endif
 
 	if (!find_extensionsGL()) return 0;
+
+#ifdef __vita__
+	/* vitaGL supports FBO functions natively but doesn't advertise
+	   GL_ARB_framebuffer_object in its extension string, so GLAD's
+	   load_GL_ARB_framebuffer_object() early-returns without loading
+	   any pointers.  Set the flag so the normal loader runs.
+	   Note: glRenderbufferStorageMultisample does NOT exist in vitaGL
+	   and will resolve to NULL — callers must guard against this. */
+	GLAD_GL_ARB_framebuffer_object = 1;
+#endif
 	load_GL_ARB_framebuffer_object(load);
 	load_GL_ARB_vertex_array_object(load);
 	load_GL_EXT_framebuffer_blit(load);

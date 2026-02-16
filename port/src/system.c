@@ -14,6 +14,9 @@
 #include "platform.h"
 #include "system.h"
 
+#include <sys/stat.h>
+#include <errno.h>
+
 #ifdef __vita__
 #include <vitasdk.h>
 #endif
@@ -81,12 +84,53 @@ static inline void sysLogSetPath(const char *fname)
 
 	// First try the path as given (this allows platform-specific
 	// absolute paths such as "ux0:data/pd/..." on Vita).
+
+	// Ensure parent directories exist for the requested path. This helps
+	// guarantee that absolute paths like "ux0:data/pd/pd.log" can be
+	// created even if the directory doesn't exist on the device yet.
+	char tmp[2048];
+	strncpy(tmp, fname, sizeof(tmp) - 1);
+	tmp[sizeof(tmp) - 1] = '\0';
+	// find last '/'
+	char *p = strrchr(tmp, '/');
+	if (p) {
+		*p = '\0';
+		// create each path component progressively
+		char accum[2048] = {0};
+		// iterate over tmp and mkdir at every '/' boundary
+		for (char *c = tmp; *c; ++c) {
+			if (*c == '/') {
+				size_t len = c - tmp;
+				if (len < sizeof(accum)) {
+					memcpy(accum, tmp, len);
+					accum[len] = '\0';
+					if (mkdir(accum, 0755) != 0) {
+						if (errno != EEXIST) {
+							// ignore errors, we'll try fopen anyway
+						}
+					}
+				}
+			}
+		}
+		// attempt final mkdir for the full parent path
+		if (mkdir(tmp, 0755) != 0 && errno != EEXIST) {
+			// non-fatal; continue to try fopen
+		}
+	}
+
 	FILE *f = fopen(fname, "wb");
 	if (!f)
 	{
 		// try working dir next
 		snprintf(logPath, sizeof(logPath), "./%s", fname);
 		f = fopen(logPath, "wb");
+	}
+	else
+	{
+		// fopen succeeded with the exact path; remember it so later
+		// sysLogPrintf can append to the same file.
+		strncpy(logPath, fname, sizeof(logPath) - 1);
+		logPath[sizeof(logPath) - 1] = '\0';
 	}
 	if (!f)
 	{

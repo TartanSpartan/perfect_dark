@@ -462,6 +462,21 @@ endif()
 
 else() # Launcher
   set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12 -s NP_COMMUNICATION_ID=${VITA_TROPHY_COMM_ID}")
+  # Ensure a `jap` build directory exists as a symlink to `jpn` for VPK packaging.
+  # Some build scripts / historical configs expect `vita_release/jap` while recent
+  # steps create `vita_release/jpn`. Create a symbolic link at configure time
+  # so the VPK packaging target always finds the expected files.
+  set(_vita_release_dir "${CMAKE_SOURCE_DIR}/vita_release")
+  set(_jap_link "${_vita_release_dir}/jap")
+  set(_jpn_dir "${_vita_release_dir}/jpn")
+  if(NOT EXISTS "${_jap_link}")
+    if(EXISTS "${_jpn_dir}")
+      file(CREATE_LINK "${_jpn_dir}" "${_jap_link}" SYMBOLIC)
+      message(STATUS "Created symlink ${_jap_link} -> ${_jpn_dir} for VPK packaging")
+    else()
+      message(WARNING "Neither ${_jap_link} nor ${_jpn_dir} exist; VPK packaging may fail")
+    endif()
+  endif()
     vita_create_vpk(pdexp.armv7.vpk ${VITA_TITLEID} ${CMAKE_SOURCE_DIR}/vita_release/ntsc/pdexp.armv7.self
     VERSION ${VITA_VERSION}
     NAME ${VITA_APP_NAME}

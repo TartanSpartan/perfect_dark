@@ -13,7 +13,6 @@ make -j15
 cd ../jap
 cmake ../.. -G "Unix Makefiles" -DVITA=1 -DROMID=jpn-final
 make -j15
-mkdir vpk
 cd ../vpk
 cmake ../.. -G "Unix Makefiles" -DVITA=1 -DLAUNCHER=1
 make -j15

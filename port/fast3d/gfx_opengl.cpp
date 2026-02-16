@@ -932,7 +932,7 @@ static void gfx_opengl_enable_debug(void) {
 
 static bool gfx_opengl_supports_framebuffers(void) {
 #ifdef __vita__
-	return false; // Off for now since there's some issue with glBlitFramebuffer
+	return true; // vitaGL supports FBOs; glBlitFramebuffer is worked around in copy_framebuffer
 #else
     if (GLVersion.major > 2) {
         // GL3.0+ supports everything we need, but we'll still check it for sanity
@@ -1208,7 +1208,9 @@ static void gfx_opengl_update_framebuffer_parameters(int fb_id, uint32_t width, 
                     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.clrbuf, 0);
                 } else {
                     glBindRenderbuffer(GL_RENDERBUFFER, fb.clrbuf_msaa);
-                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa_level, GL_RGB8, width, height);
+                    if (glad_glRenderbufferStorageMultisample) {
+                        glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa_level, GL_RGB8, width, height);
+                    }
                     glBindRenderbuffer(GL_RENDERBUFFER, 0);
                     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, fb.clrbuf_msaa);
                 }
@@ -1220,7 +1222,9 @@ static void gfx_opengl_update_framebuffer_parameters(int fb_id, uint32_t width, 
                 if (msaa_level <= 1) {
                     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
                 } else {
-                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa_level, GL_DEPTH24_STENCIL8, width, height);
+                    if (glad_glRenderbufferStorageMultisample) {
+                        glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaa_level, GL_DEPTH24_STENCIL8, width, height);
+                    }
                 }
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
             }
@@ -1288,9 +1292,10 @@ void gfx_opengl_resolve_msaa_color_buffer(int fb_id_target, int fb_id_source) {
     glBindFramebuffer(GL_READ_FRAMEBUFFER, fb_src.fbo);
     glBlitFramebuffer(0, 0, fb_src.width, fb_src.height, 0, 0, fb_dst.width, fb_dst.height, GL_COLOR_BUFFER_BIT,
                       GL_NEAREST);
-    glBindFramebuffer(GL_FRAMEBUFFER, current_framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffers[current_framebuffer].fbo);
     glEnable(GL_SCISSOR_TEST);
 }
+
 
 void* gfx_opengl_get_framebuffer_texture_id(int fb_id) {
     return (void*)(uintptr_t)framebuffers[fb_id].clrbuf;
@@ -1301,6 +1306,15 @@ void gfx_opengl_select_texture_fb(int fb_id) {
     glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, framebuffers[fb_id].clrbuf);
     current_textures_linear_filter[0] = true;
+
+#ifdef __vita__
+    // Use our stored framebuffer dimensions instead of querying vitaGL, which
+    // can return incorrect metadata for GL-created textures. This ensures
+    // `uTexSize` matches the actual FBO size.
+    tex0_size[0] = (float)framebuffers[fb_id].width;
+    tex0_size[1] = (float)framebuffers[fb_id].height;
+    cur_tex_size = tex0_size;
+#endif
 }
 
 void gfx_opengl_copy_framebuffer(int fb_dst, int fb_src, int left, int top, bool flip_y, bool use_back) {
