@@ -5203,6 +5203,19 @@ void menuProcessInput(void)
 		inputs.unk14 = 0;
 		inputs.start = starttap ? true : false;
 
+		// Allow Player 1's R trigger to act as Player 2's Start on the
+		// multiplayer endscreen (Vita single-controller mapping) as an
+		// escape key for bugtesting, otherwise P1 would have to reset
+		// the game and this takes longer.
+		if (!inputs.start && g_MenuData.root == MENUROOT_MPENDSCREEN && menu->playernum == 1) {
+			u32 p1buttonsnow = joyGetButtonsPressedThisFrame(0, 0xffffffff);
+
+			if (p1buttonsnow & R_TRIG) {
+				inputs.start = true;
+				starttap = true;
+			}
+		}
+
 #ifndef PLATFORM_N64
 		// if we haven't been using the mouse but we have been keyboard scrolling disable the mouse
 		if (!inputs.mousemoved && (inputs.leftright || inputs.updown || inputs.leftrightheld || inputs.updownheld)) {
