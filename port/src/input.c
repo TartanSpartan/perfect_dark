@@ -1692,28 +1692,19 @@ s32 inputTextHandler(char *out, const u32 outSize, s32 *curCol, s32 oskCharsOnly
 			}
 		}
 	}
-	else if (key == VK_BACKSPACE)
-	{
-		if (*curCol)
-		{
-			out[--*curCol] = '\0';
-		}
-		else
-		{
-			out[0] = '\0';
-		}
-	}
-	else if (key == VK_RETURN)
-	{
-		if (out[0] && *curCol)
-		{
-			return 1;
-		}
-	}
-	else if (key == VK_ESCAPE)
-	{
-		return -1;
-	}
+} else if (key == VK_BACKSPACE) {
+    if (*curCol) {
+        out[--*curCol] = '\0';
+    } else {
+        out[0] = '\0';
+    }
+} else if (key == VK_RETURN) {
+    if (out[0] && *curCol) {
+        return 1;
+    }
+} else if (key == VK_ESCAPE) {
+    return -1;
+}
 
 	return 0;
 }
