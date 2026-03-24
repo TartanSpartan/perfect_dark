@@ -5203,10 +5203,9 @@ void menuProcessInput(void)
 		inputs.unk14 = 0;
 		inputs.start = starttap ? true : false;
 
-		// Allow Player 1's R trigger to act as Player 2's Start on the
-		// multiplayer endscreen (Vita single-controller mapping) as an
-		// escape key for bugtesting, otherwise P1 would have to reset
-		// the game and this takes longer.
+		// Allow Player 1's R trigger to act as Player 2's Start button on the multiplayer
+		// endscreen (intended for single-controller platforms such as Vita) as an escape
+		// key for bugtesting, otherwise P1 would have to reset the game and this takes longer.
 		if (!inputs.start && g_MenuData.root == MENUROOT_MPENDSCREEN && menu->playernum == 1) {
 			u32 p1buttonsnow = joyGetButtonsPressedThisFrame(0, 0xffffffff);
 
