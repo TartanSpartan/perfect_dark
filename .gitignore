@@ -44,7 +44,7 @@ pd.armv7.vpk
 pd.armv7/
 port/vita/
 tools/buildscripts/elf_flags_report.sh
-pd.log
+*.log
 dist/vita/
 plugin/
 sceCtrl\ routines.txt
